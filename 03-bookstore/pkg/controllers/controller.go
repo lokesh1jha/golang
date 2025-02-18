@@ -13,7 +13,6 @@ import (
 // NewBook is a variable to hold the new book
 var NewBook models.Book
 
-
 // GetBooks is a function to get all books
 func GetBook(w http.ResponseWriter, r *http.Request) {
 	newBook := models.GetAllBooks()
@@ -39,7 +38,6 @@ func GetBookById(w http.ResponseWriter, r *http.Request) {
 	w.Write(res)
 }
 
-
 // CreateBook is a function to create a book
 func CreateBook(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewDecoder(r.Body).Decode(&NewBook)
@@ -52,51 +50,51 @@ func CreateBook(w http.ResponseWriter, r *http.Request) {
 
 // UpdateBook is a function to update a book
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-    bookId := vars["bookId"]
-    ID, err := strconv.ParseInt(bookId, 0, 0)
-    if err != nil {
-        fmt.Println("Error while parsing")
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+	vars := mux.Vars(r)
+	bookId := vars["bookId"]
+	ID, err := strconv.ParseInt(bookId, 0, 0)
+	if err != nil {
+		fmt.Println("Error while parsing")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-    // Fetch the existing book
-    db, _ := models.GetBookById(ID)
-    if db.Error != nil {
-        fmt.Println("Error fetching book")
-        w.WriteHeader(http.StatusInternalServerError)
-        return
-    }
-    existingBook := db.Value.(*models.Book)
+	// Fetch the existing book
+	existingBook, _ := models.GetBookById(ID)
 
-    // Decode the request body into a new book object
-    var newBook Book
-    err = json.NewDecoder(r.Body).Decode(&newBook)
-    if err != nil {
-        fmt.Println("Error decoding request body")
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+	// If the book with the given ID doesn't exist, return an error
+	if existingBook.ID == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
-    // Update only the fields that are provided in the request
-    if newBook.Title != "" {
-        existingBook.Title = newBook.Title
-    }
-    if newBook.Author != "" {
-        existingBook.Author = newBook.Author
-    }
-    if newBook.Publisher != "" {
-        existingBook.Publisher = newBook.Publisher
-    }
-    // Add other fields as necessary
+	// Decode the request body into a new book object
+	var newBook models.Book
+	err = json.NewDecoder(r.Body).Decode(&newBook)
+	if err != nil {
+		fmt.Println("Error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-    // Save the updated book
-    updatedBook := existingBook.UpdateBook(ID)
-    res, _ := json.Marshal(updatedBook)
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write(res)
+	// Update only the fields that are provided in the request
+	if newBook.Title != "" {
+		existingBook.Title = newBook.Title
+	}
+	if newBook.Author != "" {
+		existingBook.Author = newBook.Author
+	}
+	if newBook.Publication != "" {
+		existingBook.Publication = newBook.Publication
+	}
+	// Add other fields as necessary
+
+	// Save the updated book
+	updatedBook := existingBook.UpdateBook(ID)
+	res, _ := json.Marshal(updatedBook)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
 }
 
 // DeleteBook is a function to delete a book
@@ -112,4 +110,4 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "pkglication/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(res)
-}``
+}
